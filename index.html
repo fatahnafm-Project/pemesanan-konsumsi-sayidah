@@ -17,9 +17,9 @@
 
     <nav class="bg-slate-900 p-6 shadow-xl mb-8">
         <div class="max-w-5xl mx-auto flex justify-between items-center">
-            <h1 class="text-white font-bold text-xl tracking-tighter">KONSUMTOR <span class="text-amber-500">PRO</span></h1>
+            <h1 class="text-white font-bold text-xl tracking-tighter">KONSUMTOR PANJIMAS <span class="text-amber-500">GACOR</span></h1>
             <button onclick="generatePDF()" class="bg-amber-500 hover:bg-amber-600 text-slate-900 px-8 py-2 rounded-full font-black text-sm transition transform hover:scale-105 shadow-lg">
-                CETAK PESANAN (F4)
+                CETAK PESANAN (PDF)
             </button>
         </div>
     </nav>
@@ -167,7 +167,7 @@
             doc.text("di Tempat", 15, headerY + 20);
         
             doc.text("Assalamu'alaikum Wr. Wb.", 15, headerY + 32);
-            const pembuka = `Sehubungan dengan dilaksanakannya kegiatan ${kegiatan} pada tanggal ${tgl}, kami selaku panitia bermaksud memesan konsumsi dengan rincian sebagai berikut:`;
+            const pembuka = `Sehubungan dengan dilaksanakannya kegiatan ${kegiatan} pada tanggal ${tgl}, kami selaku PANITIA UJIAN MASUK bermaksud memesan konsumsi dengan rincian sebagai berikut:`;
             doc.text(doc.splitTextToSize(pembuka, 180), 15, headerY + 39);
         
             // --- 3. TABEL ---
@@ -182,13 +182,13 @@
         
             // --- 4. PENUTUP ---
             let finalY = doc.lastAutoTable.finalY + 10;
-            doc.text("Demikian permohonan ini kami sampaikan, atas kerja samanya kami ucapkan terima kasih.", 15, finalY);
+            doc.text("Demikian permohonan ini kami sampaikan, atas perhatian dan kerja samanya kami ucapkan terima kasih.", 15, finalY);
             doc.text("Wassalamu'alaikum Wr. Wb.", 15, finalY + 7);
         
             // --- 5. TANDA TANGAN (DIPERBESAR) ---
             const signY = finalY + 20;
             doc.text("Hormat kami,", 145, signY);
-            doc.text("Konsumtor Panitia,", 145, signY + 5);
+            doc.text("Panitia Ujian Masuk,", 145, signY + 5);
             
             if(imgTtd) {
                 // Ukuran TTD diperbesar menjadi 50x25mm
@@ -197,7 +197,7 @@
             
             doc.setFont("helvetica", "bold");
             // Garis nama geser ke bawah sedikit untuk memberi ruang TTD
-            doc.text("( ................................... )", 145, signY + 40);
+            doc.text("( Mohammad Naufal Ash Shodiqi, S.Ag. )", 145, signY + 40);
         
             doc.save(`Order_Konsumsi_${kegiatan}.pdf`);
         }
