@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Order Konsumsi - Panitia Ujian</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        body { background-color: #f8fafc; font-family: 'Inter', sans-serif; }
+        .navy-header { background-color: #0f172a; }
+        .accent-gold { color: #eab308; }
+    </style>
+</head>
+<body class="pb-20">
+
+    <nav class="navy-header p-6 shadow-lg mb-8">
+        <div class="max-w-5xl mx-auto flex justify-between items-center">
+            <h1 class="text-white font-bold text-xl tracking-tight">KONSUMTOR <span class="accent-gold">PANITIA UJIAN</span></h1>
+            <button onclick="generatePDF()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2 rounded-full font-bold text-sm transition shadow-lg">
+                Download Pesanan (PDF F4)
+            </button>
+        </div>
+    </nav>
+
+    <main class="max-w-5xl mx-auto px-4 space-y-8">
+        
+        <section class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+            <h2 class="text-slate-800 font-bold mb-4 flex items-center">
+                <span class="mr-2">📝</span> Pengaturan Kop Surat & Info
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <input type="text" id="kopNama" placeholder="Nama Instansi/Sekolah (Contoh: MA Al-Hikmah)" class="p-3 border rounded-xl outline-none focus:ring-2 ring-emerald-500">
+                <input type="text" id="kopKegiatan" placeholder="Nama Kegiatan (Contoh: Ujian Akhir Semester)" class="p-3 border rounded-xl outline-none focus:ring-2 ring-emerald-500">
+                <input type="text" id="tglKegiatan" placeholder="Tanggal Pelaksanaan" class="p-3 border rounded-xl outline-none focus:ring-2 ring-emerald-500">
+                <input type="text" id="namaSayidah" placeholder="Ditujukan Kepada (Contoh: Sayidah Aminah)" class="p-3 border rounded-xl outline-none focus:ring-2 ring-emerald-500">
+            </div>
+        </section>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <section class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                <h3 class="font-bold text-slate-700 mb-4 border-b pb-2">📦 Pesanan Satuan (Snack/Nasi Dos)</h3>
+                <div class="space-y-3">
+                    <input type="text" id="itemNama" placeholder="Jenis Makanan (Contoh: Nasi Kotak Ayam Bakar)" class="w-full p-3 bg-slate-50 border rounded-xl">
+                    <div class="grid grid-cols-2 gap-3">
+                        <input type="number" id="itemQty" placeholder="Jumlah (Porsi)" class="p-3 bg-slate-50 border rounded-xl">
+                        <input type="text" id="itemKet" placeholder="Keterangan (Contoh: Tanpa pedas)" class="p-3 bg-slate-50 border rounded-xl">
+                    </div>
+                    <button onclick="tambahSatuan()" class="w-full py-3 bg-slate-800 text-white rounded-xl font-bold text-sm hover:bg-black">Tambah ke Daftar</button>
+                </div>
+            </section>
+
+            <section class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                <h3 class="font-bold text-slate-700 mb-4 border-b pb-2">🍽️ Pesanan Prasmanan</h3>
+                <div class="space-y-3">
+                    <div class="grid grid-cols-2 gap-3">
+                        <input type="number" id="prasQty" placeholder="Jumlah Orang" class="p-3 bg-slate-50 border rounded-xl">
+                        <input type="number" id="prasBudget" placeholder="Budget per Orang" class="p-3 bg-slate-50 border rounded-xl">
+                    </div>
+                    <input type="text" id="prasKet" placeholder="Keterangan Menu (Contoh: Sop, Rendang, Es Buah)" class="w-full p-3 bg-slate-50 border rounded-xl">
+                    <button onclick="tambahPrasmanan()" class="w-full py-3 bg-amber-600 text-white rounded-xl font-bold text-sm hover:bg-amber-700">Tambah ke Daftar</button>
+                </div>
+            </section>
+        </div>
+
+        <section class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+            <table class="w-full text-left">
+                <thead class="bg-slate-50 border-b">
+                    <tr class="text-[10px] text-slate-400 uppercase font-black">
+                        <th class="p-4">Jenis Pesanan</th>
+                        <th class="p-4">Rincian</th>
+                        <th class="p-4">Keterangan</th>
+                        <th class="p-4">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody id="tabelDaftar" class="text-sm">
+                    </tbody>
+            </table>
+        </section>
+    </main>
+
+    <script>
+        let daftarPesanan = [];
+
+        function tambahSatuan() {
+            const nama = document.getElementById('itemNama').value;
+            const qty = document.getElementById('itemQty').value;
+            const ket = document.getElementById('itemKet').value;
+            if(!nama || !qty) return alert("Lengkapi data satuan!");
+
+            daftarPesanan.push({ type: 'SATUAN', nama, qty, ket, sub: '-' });
+            renderTable();
+            document.getElementById('itemNama').value = "";
+            document.getElementById('itemQty').value = "";
+            document.getElementById('itemKet').value = "";
+        }
+
+        function tambahPrasmanan() {
+            const qty = document.getElementById('prasQty').value;
+            const budget = document.getElementById('prasBudget').value;
+            const ket = document.getElementById('prasKet').value;
+            if(!qty || !budget) return alert("Lengkapi data prasmanan!");
+
+            daftarPesanan.push({ 
+                type: 'PRASMANAN', 
+                nama: `Prasmanan (${qty} Orang)`, 
+                qty: qty, 
+                sub: `Budget: Rp ${parseInt(budget).toLocaleString()}/org`,
+                ket: ket 
+            });
+            renderTable();
+            document.getElementById('prasQty').value = "";
+            document.getElementById('prasBudget').value = "";
+            document.getElementById('prasKet').value = "";
+        }
+
+        function renderTable() {
+            const body = document.getElementById('tabelDaftar');
+            body.innerHTML = "";
+            daftarPesanan.forEach((p, index) => {
+                body.innerHTML += `
+                    <tr class="border-b">
+                        <td class="p-4 font-bold text-slate-700">${p.type}</td>
+                        <td class="p-4"><b>${p.nama}</b><br><span class="text-xs text-slate-400">${p.sub}</span></td>
+                        <td class="p-4 text-slate-500">${p.ket}</td>
+                        <td class="p-4"><button onclick="hapus(${index})" class="text-red-400 hover:text-red-600">Hapus</button></td>
+                    </tr>
+                `;
+            });
+        }
+
+        function hapus(index) {
+            daftarPesanan.splice(index, 1);
+            renderTable();
+        }
+
+        async function generatePDF() {
+            const { jsPDF } = window.jspdf;
+            // Ukuran F4 dalam mm: 210 x 330
+            const doc = new jsPDF('p', 'mm', [210, 330]);
+
+            const instansi = document.getElementById('kopNama').value || "[NAMA INSTANSI]";
+            const kegiatan = document.getElementById('kopKegiatan').value || "[NAMA KEGIATAN]";
+            const tgl = document.getElementById('tglKegiatan').value || "-";
+            const sayidah = document.getElementById('namaSayidah').value || "Sayidah / Ibu Guru";
+
+            // KOP SURAT
+            doc.setFont("times", "bold");
+            doc.setFontSize(16);
+            doc.text(instansi.toUpperCase(), 105, 20, { align: 'center' });
+            doc.setFontSize(12);
+            doc.text("PANITIA " + kegiatan.toUpperCase(), 105, 27, { align: 'center' });
+            doc.setLineWidth(0.8);
+            doc.line(15, 32, 195, 32);
+            doc.setLineWidth(0.2);
+            doc.line(15, 33, 195, 33);
+
+            // TANGGAL & TUJUAN
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(10);
+            doc.text("Hal: Permohonan Pemesanan Konsumsi", 15, 45);
+            doc.text("Kepada Yth:", 15, 55);
+            doc.setFont("helvetica", "bold");
+            doc.text(sayidah, 15, 60);
+            doc.setFont("helvetica", "normal");
+            doc.text("di Tempat", 15, 65);
+
+            // SALAM & PEMBUKA
+            doc.text("Assalamu'alaikum Wr. Wb.", 15, 75);
+            const textPembuka = `Sehubungan dengan dilaksanakannya kegiatan ${kegiatan} pada tanggal ${tgl}, kami selaku panitia bermaksud memohon bantuan untuk pengadaan konsumsi dengan rincian sebagai berikut:`;
+            const splitPembuka = doc.splitTextToSize(textPembuka, 180);
+            doc.text(splitPembuka, 15, 82);
+
+            // TABEL DATA
+            const body = daftarPesanan.map(p => [
+                p.nama,
+                p.qty + " Porsi",
+                p.ket
+            ]);
+
+            doc.autoTable({
+                head: [['Jenis Pesanan / Menu', 'Jumlah', 'Keterangan']],
+                body: body,
+                startY: 95,
+                theme: 'grid',
+                headStyles: { fillColor: [40, 40, 40], textColor: [255, 255, 255] },
+                styles: { font: 'helvetica', fontSize: 10 }
+            });
+
+            // PENUTUP
+            let finalY = doc.lastAutoTable.finalY + 10;
+            const textPenutup = "Demikian permohonan pesanan ini kami sampaikan. Atas bantuan dan kerja samanya kami ucapkan banyak terima kasih.";
+            doc.text(doc.splitTextToSize(textPenutup, 180), 15, finalY);
+            doc.text("Wassalamu'alaikum Wr. Wb.", 15, finalY + 10);
+
+            // TANDA TANGAN
+            doc.text("Hormat Kami,", 140, finalY + 25);
+            doc.text("Konsumtor Panitia,", 140, finalY + 30);
+            doc.line(140, finalY + 55, 190, finalY + 55);
+            doc.text("(......................................)", 140, finalY + 60);
+
+            doc.save(`Pesanan_Konsumsi_${kegiatan}.pdf`);
+        }
+    </script>
+</body>
+</html>
