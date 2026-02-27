@@ -135,62 +135,70 @@
             `).join('');
         }
 
-        async function generatePDF() {
+               async function generatePDF() {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF('p', 'mm', [210, 330]); // Ukuran F4
-
+        
             const sayidah = document.getElementById('namaSayidah').value || "..................";
             const kegiatan = document.getElementById('namaKegiatan').value || "Ujian";
             const tgl = document.getElementById('tglKegiatan').value || "-";
-
-            // 1. KOP SURAT (GAMBAR)
+        
+            // --- 1. KOP SURAT (DIPERBAIKI AGAR TIDAK GEPENG) ---
+            let headerY = 10;
             if(imgKop) {
-                doc.addImage(imgKop, 'PNG', 10, 10, 190, 40); // Posisi & Ukuran Kop
+                // Kita gunakan lebar tetap 190mm, tapi tinggi otomatis mengikuti rasio gambar
+                const props = doc.getImageProperties(imgKop);
+                const autoHeight = (props.height * 190) / props.width; 
+                doc.addImage(imgKop, 'PNG', 10, 10, 190, autoHeight);
+                headerY = autoHeight + 20; // Tabel akan mulai setelah gambar selesai
             } else {
                 doc.setFontSize(20); doc.text("KOP SURAT", 105, 30, {align:'center'});
+                headerY = 50;
             }
-
-            // 2. HEADER TEKS
+        
+            // --- 2. HEADER TEKS ---
             doc.setFont("helvetica", "normal");
-            doc.setFontSize(10);
-            doc.text(`Hal: Permohonan Pemesanan Konsumsi`, 15, 60);
-            doc.text(`Kepada Yth:`, 15, 70);
+            doc.setFontSize(11);
+            doc.text(`Hal: Permohonan Pemesanan Konsumsi`, 15, headerY);
+            doc.text(`Kepada Yth:`, 15, headerY + 10);
             doc.setFont("helvetica", "bold");
-            doc.text(sayidah, 15, 75);
+            doc.text(sayidah, 15, headerY + 15);
             doc.setFont("helvetica", "normal");
-            doc.text("di Tempat", 15, 80);
-
-            doc.text("Assalamu'alaikum Wr. Wb.", 15, 90);
+            doc.text("di Tempat", 15, headerY + 20);
+        
+            doc.text("Assalamu'alaikum Wr. Wb.", 15, headerY + 32);
             const pembuka = `Sehubungan dengan dilaksanakannya kegiatan ${kegiatan} pada tanggal ${tgl}, kami selaku panitia bermaksud memesan konsumsi dengan rincian sebagai berikut:`;
-            doc.text(doc.splitTextToSize(pembuka, 180), 15, 97);
-
-            // 3. TABEL
+            doc.text(doc.splitTextToSize(pembuka, 180), 15, headerY + 39);
+        
+            // --- 3. TABEL ---
             doc.autoTable({
                 head: [['No', 'Pesanan / Menu', 'Kuantitas', 'Keterangan Tambahan']],
                 body: daftarPesanan.map((p, i) => [i+1, p.nama, p.rincian, p.ket]),
-                startY: 110,
+                startY: headerY + 55,
                 theme: 'grid',
                 headStyles: { fillColor: [50, 50, 50] },
                 styles: { fontSize: 10, cellPadding: 4 }
             });
-
-            // 4. PENUTUP
+        
+            // --- 4. PENUTUP ---
             let finalY = doc.lastAutoTable.finalY + 10;
             doc.text("Demikian permohonan ini kami sampaikan, atas kerja samanya kami ucapkan terima kasih.", 15, finalY);
             doc.text("Wassalamu'alaikum Wr. Wb.", 15, finalY + 7);
-
-            // 5. TANDA TANGAN (GAMBAR)
+        
+            // --- 5. TANDA TANGAN (DIPERBESAR) ---
             const signY = finalY + 20;
             doc.text("Hormat kami,", 145, signY);
             doc.text("Konsumtor Panitia,", 145, signY + 5);
             
             if(imgTtd) {
-                doc.addImage(imgTtd, 'PNG', 140, signY + 7, 40, 20); // Posisi & Ukuran TTD
+                // Ukuran TTD diperbesar menjadi 50x25mm
+                doc.addImage(imgTtd, 'PNG', 140, signY + 7, 50, 25); 
             }
             
             doc.setFont("helvetica", "bold");
-            doc.text("( ................................... )", 145, signY + 35);
-
+            // Garis nama geser ke bawah sedikit untuk memberi ruang TTD
+            doc.text("( ................................... )", 145, signY + 40);
+        
             doc.save(`Order_Konsumsi_${kegiatan}.pdf`);
         }
     </script>
